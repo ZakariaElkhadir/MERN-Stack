@@ -19,24 +19,22 @@ import {
   useDisclosure,
   useToast,
   VStack,
+  Tooltip,
 } from "@chakra-ui/react";
 import { useProductStore } from "../store/Product";
 import { useState, useCallback } from "react";
 
-const UpdateProductModal = ({ isOpen, onClose, product, onUpdate }) => {
+const UpdateProductModal = ({ isOpen, onClose, product, onUpdate, toast }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setUpdatedProduct((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  const handleSubmit = useCallback(() => {
-    if (
-      !updatedProduct.name ||
-      !updatedProduct.price ||
-      !updatedProduct.image
-    ) {
+  const handleSubmit = useCallback(async () => {
+    if (!updatedProduct.name || !updatedProduct.price || !updatedProduct.image) {
       toast({
         title: "Error",
         description: "Please fill all fields",
@@ -46,8 +44,12 @@ const UpdateProductModal = ({ isOpen, onClose, product, onUpdate }) => {
       });
       return;
     }
-    onUpdate(updatedProduct);
-  }, [updatedProduct, onUpdate]);
+
+    setIsLoading(true);
+    await onUpdate(updatedProduct);
+    setIsLoading(false);
+    onClose();
+  }, [updatedProduct, onUpdate, onClose, toast]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -62,6 +64,7 @@ const UpdateProductModal = ({ isOpen, onClose, product, onUpdate }) => {
               name="name"
               value={updatedProduct.name}
               onChange={handleChange}
+              isDisabled={isLoading}
             />
             <Input
               placeholder="Price"
@@ -69,20 +72,22 @@ const UpdateProductModal = ({ isOpen, onClose, product, onUpdate }) => {
               type="number"
               value={updatedProduct.price}
               onChange={handleChange}
+              isDisabled={isLoading}
             />
             <Input
               placeholder="Image URL"
               name="image"
               value={updatedProduct.image}
               onChange={handleChange}
+              isDisabled={isLoading}
             />
           </VStack>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="blue" mr={3} onClick={handleSubmit}>
+          <Button colorScheme="blue" mr={3} onClick={handleSubmit} isLoading={isLoading}>
             Update
           </Button>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} isDisabled={isLoading}>
             Cancel
           </Button>
         </ModalFooter>
@@ -135,32 +140,35 @@ const ProductCard = ({ product }) => {
 
   return (
     <Box
-      shadow="lg"
-      rounded="lg"
-      overflow="hidden"
-      transition="all 0.3s"
-      _hover={{ transform: "translateY(-5px)", shadow: "xl" }}
-      bg={bg}
-    >
-      <Image
-        src={image}
-        alt={name}
-        h={48}
-        w="full"
-        objectFit="cover"
-        loading="lazy"
-      />
+    shadow="lg"
+    rounded="lg"
+    overflow="hidden"
+    transition="all 0.3s"
+    _hover={{ transform: "translateY(-5px)", shadow: "xl" }}
+    bg={bg}
+    w="170px"
+    m={2} // Add margin around the card
+  >
+    <Image
+      src={image}
+      alt={name}
+      aspectRatio={16 / 9}
+      w="full"
+      objectFit="cover"
+      loading="lazy"
+    />
 
-      <Box p={4}>
-        <Heading as="h3" size="md" mb={2}>
-          {name}
-        </Heading>
+    <Box p={4}>
+      <Heading as="h3" size="md" mb={2}>
+        {name}
+      </Heading>
 
-        <Text fontWeight="bold" fontSize="xl" color={textColor} mb={4}>
-          ${price}
-        </Text>
+      <Text fontWeight="bold" fontSize="xl" color={textColor} mb={4}>
+        ${price}
+      </Text>
 
-        <HStack spacing={2}>
+      <HStack spacing={2}>
+        <Tooltip label="Edit Product" aria-label="Edit Product">
           <IconButton
             icon={<EditIcon />}
             onClick={onOpen}
@@ -168,6 +176,8 @@ const ProductCard = ({ product }) => {
             aria-label="Edit Product"
             isLoading={isUpdating}
           />
+        </Tooltip>
+        <Tooltip label="Delete Product" aria-label="Delete Product">
           <IconButton
             icon={<DeleteIcon />}
             onClick={handleDeleteProduct}
@@ -175,16 +185,18 @@ const ProductCard = ({ product }) => {
             aria-label="Delete Product"
             isLoading={isDeleting}
           />
-        </HStack>
-      </Box>
-
-      <UpdateProductModal
-        isOpen={isOpen}
-        onClose={onClose}
-        product={product}
-        onUpdate={handleUpdateProduct}
-      />
+        </Tooltip>
+      </HStack>
     </Box>
+
+    <UpdateProductModal
+      isOpen={isOpen}
+      onClose={onClose}
+      product={product}
+      onUpdate={handleUpdateProduct}
+      toast={toast}
+    />
+  </Box>
   );
 };
 

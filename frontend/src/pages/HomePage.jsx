@@ -1,7 +1,6 @@
 import {
   Container,
   Text,
-  textDecoration,
   SimpleGrid,
   VStack,
 } from "@chakra-ui/react";
@@ -26,29 +25,32 @@ function HomePage() {
           bgClip="text"
           textAlign={"center"}
         >
-          Curent Products
+          Current Products
         </Text>
-        <SimpleGrid
-          columns={{ base: 1, md: 2, lg: 3 }}
-          spacing={10}
-          w={"full"}
-        >
+        {products.length > 0 ? (
+          <SimpleGrid
+            columns={{ base: 1, md: 2, lg: 3 }}
+            spacing={10}
+            w={"full"}
+          >
             {products.map((product) => (
-                <ProductCard key={product._id} product={product} />
+              <ProductCard key={product._id} product={product} />
             ))}
-        </SimpleGrid>
-        <Text fontSize="20" fontWeight={"bold"} color={"gray.500"}>
-          No products available{" "}
-          <Link to="/create">
-            <Text
-              as={"span"}
-              color={"blue.500"}
-              _hover={{ textDecoration: "underline" }}
-            >
-              Create a new product
-            </Text>
-          </Link>
-        </Text>
+          </SimpleGrid>
+        ) : (
+          <Text fontSize="20" fontWeight={"bold"} color={"gray.500"}>
+            No products available{" "}
+            <Link to="/create">
+              <Text
+                as={"span"}
+                color={"blue.500"}
+                _hover={{ textDecoration: "underline" }}
+              >
+                Create a new product
+              </Text>
+            </Link>
+          </Text>
+        )}
       </VStack>
     </Container>
   );
